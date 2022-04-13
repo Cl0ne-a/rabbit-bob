@@ -1,0 +1,11 @@
+{
+  "vk": {
+    "login": "person@mail.com",
+    "token": "abcdef012345789",
+    "app_id": 223_322,
+  },
+  "mongo": {
+    "uri": "mongodb://localhost:27017",
+    "db_name": "some_db"
+  }
+}

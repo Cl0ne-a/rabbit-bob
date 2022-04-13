@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-C',
         dest='config', required=True,
-        help='config file with login credentials'
+        help='config file with login credentials, export(db) settings, etc.'
     )
     parser.add_argument(
         '-G',

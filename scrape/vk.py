@@ -24,8 +24,13 @@ class VKScraper:
     ):
         # self._lock = lock FIXME
 
+        if 'vk' not in config:
+            raise ValueError('json config must contain "vk" section')
+        else:
+            config = config
+
         for mandatory in ['login', 'token', 'app_id']:
-            if not config.get('login', False):
+            if not config['vk'].get(mandatory, False):
                 raise ValueError(f'{mandatory} field must be provided')
 
         self.post_limit = post_limit
@@ -34,9 +39,9 @@ class VKScraper:
         self._group_list = group_list if group_list is not None else []
 
         self.__session = vk_api.VkApi(
-            login=config['login'],
-            token=config['token'],
-            app_id=config['app_id'],
+            login=config['vk']['login'],
+            token=config['vk']['token'],
+            app_id=config['vk']['app_id'],
             scope=sum(VkUserPermissions) - VkUserPermissions.MESSAGES
         )
         # noinspection PyProtectedMember
