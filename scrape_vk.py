@@ -2,7 +2,8 @@ import json
 import os.path
 from argparse import ArgumentParser
 
-from scrape.vk import VKScraper, VKStdoutExporter
+from export.mongo import MongoVKExporter
+from scrape.vk import VKScraper
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -66,9 +67,9 @@ if __name__ == '__main__':
 
     vs = VKScraper(
         config=config,
-        exporter=VKStdoutExporter(),
+        exporter=MongoVKExporter(config),
         group_list=group_ids,
         post_limit=args.posts_limit,
         comment_limit=args.comments_limit,
-    )
+    )  # -34215577
     vs.scrape()
