@@ -6,11 +6,12 @@ from base import Exporter
 
 
 # TODO: remove when not needed
-class VKStdoutExporter(Exporter):
+class VKStdoutExporter:
     """Simple example of exporting data to standard output"""
-    def save_record(self, items, *args, **kwargs):
-        for item in items:
-            print(f'[{item["owner_id"]}/{item["id"]}] {item["text"][:50]}...')
+    @staticmethod
+    def consume_group_posts(gid, posts):
+        for item in posts:
+            print(f'[{gid}/{item["id"]}] {item["text"]:.50s}...')
 
 
 class VKScraper:
@@ -84,4 +85,4 @@ class VKScraper:
             # for post in scraped:
             #     pid = post['id']
             #     comments = self.scrape_post_comments(gid, pid)
-            self.exporter.save_record(scraped)
+            self.exporter.consume_group_posts(gid, scraped)

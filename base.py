@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
+from typing import Protocol
 
 
-class Exporter(ABC):
-
-    @abstractmethod
-    def save_record(self, *args, **kwargs):
+class Exporter(Protocol):
+    def consume_group_posts(self, *args, **kwargs):
         ...
