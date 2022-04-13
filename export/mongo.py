@@ -37,3 +37,8 @@ class MongoVKExporter(MongoExporter):
         existing = {p['id'] for p in group_collection.find(requested)}
 
         return [p for p in posts if p['id'] not in existing]
+
+
+class MongoTelegramExporter(MongoVKExporter):
+    """Turns out vk exporter fits this tg as well (so far)"""
+    ...

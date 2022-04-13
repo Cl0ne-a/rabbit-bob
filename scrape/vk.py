@@ -5,15 +5,6 @@ from vk_api import VkUserPermissions
 from base import Exporter
 
 
-# TODO: remove when not needed
-class VKStdoutExporter:
-    """Simple example of exporting data to standard output"""
-    @staticmethod
-    def consume_group_posts(gid, posts):
-        for item in posts:
-            print(f'[{gid}/{item["id"]}] {item["text"]:.50s}...')
-
-
 class VKScraper:
     def __init__(
             self, config: dict,
@@ -27,8 +18,6 @@ class VKScraper:
 
         if 'vk' not in config:
             raise ValueError('json config must contain "vk" section')
-        else:
-            config = config
 
         for mandatory in ['login', 'token', 'app_id']:
             if not config['vk'].get(mandatory, False):
@@ -82,7 +71,4 @@ class VKScraper:
         while self._group_list:
             gid = self._group_list.pop()
             scraped = self.scrape_group_posts(gid)
-            # for post in scraped:
-            #     pid = post['id']
-            #     comments = self.scrape_post_comments(gid, pid)
             self.exporter.consume_group_posts(gid, scraped)

@@ -24,12 +24,12 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--posts-limit',
-        default=1000,
+        type=int, default=1000,
         help='maximum amount of posts (latest) to scrape from single group'
     )
     parser.add_argument(
         '--comments-limit',
-        default=1000,
+        type=int, default=1000,
         help='maximum amount of comments (latest) '
              'to scrape from single group post'
     )
@@ -64,12 +64,12 @@ if __name__ == '__main__':
 
     group_ids.update(args.group_list)
     config = json.load(open(args.config))
-
-    vs = VKScraper(
+    exporter = MongoVKExporter(config)
+    scraper = VKScraper(
         config=config,
-        exporter=MongoVKExporter(config),
+        exporter=exporter,
         group_list=group_ids,
         post_limit=args.posts_limit,
         comment_limit=args.comments_limit,
-    )  # -34215577
-    vs.scrape()
+    )
+    scraper.scrape()
