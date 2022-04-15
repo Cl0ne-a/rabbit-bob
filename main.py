@@ -1,11 +1,13 @@
 from telethon import TelegramClient, events
 import DbClient as db
+import argparse
+
 
 # change to your own  api_id and api_hash from https://telegram.org/
 api_id = 14434841
 api_hash = '0acd5bb421d68b4a006454465de4fa78'
-
-telegram_client = TelegramClient('HannaShchur', api_id, api_hash)
+parser = argparse.ArgumentParser('set_history_length')
+telegram_client = TelegramClient('Rabbit Bob', api_id, api_hash)
 
 print('Input chat to read: \n')
 chat_name = input()
@@ -22,49 +24,34 @@ async def normal_handler(event):
     message = {'date': mess_date,
                'user_id': s_user_id,
                'message': user_mess}
-    db.collect_message(chat_name, message)
+    db.save_message(chat_name, message)
 
 
 telegram_client.start()
 
 # get all the history in the channel:
-
-messages_history = telegram_client.iter_messages(chat_name)
+parser.add_argument("limiter", help="limits the history length to certain length", type=int, default=10)
+history = parser.parse_args()
+messages_history = telegram_client.iter_messages(chat_name, history.limiter)
 
 # with TelegramClient('HannaShchur', api_id, api_hash) as client:
 history = []
 
-
 if chat_name[0].__eq__('@'):
     for message in messages_history:
-        if len(history) < 5:
-            date = message.date
-            user_id = message.peer_id.user_id
-            message_text = message.message
-            element = {'date': date, 'user_id': user_id, 'message': message_text}
-            history.append(element)
-        else:
-            break
+        date = message.date
+        user_id = message.peer_id.user_id
+        message_text = message.message
+        element = {'date': date, 'user_id': user_id, 'message': message_text}
+        history.append(element)
+
 else:
     for message in messages_history:
-        if len(history) < 25:
-            date = message.date
-            message_text = message.message
-            element = {'date': date, 'message': message_text}
-            history.append(element)
-        else:
-            break
+        date = message.date
+        message_text = message.message
+        element = {'date': date, 'message': message_text}
+        history.append(element)
 
-
-# for message in list(db.read_chat_history(chat_name, '01-04-2022')):
-#     if len(history) < 100:
-#         message_date = message.get('date')
-#         message_sender_id = message.get('user_id')
-#         message_text = message.get('message')
-#         element = {'date': message_date, 'user_id': message_sender_id, 'message': message_text}
-#         history.append(element)
-
-
-db.save_history(chat_name, history)
+db.save_history(chat_name, history.__reversed__())
 
 telegram_client.run_until_disconnected()

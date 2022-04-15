@@ -9,11 +9,12 @@ collection = client.get_database('chatters')
 
 # get or create chat/channel from collection
 def chat(chat_name):
+    collection.drop_collection(chat_name)
     return collection.get_collection(chat_name)
 
 
-# save onr message
-def collect_message(some_chat, some_post):
+# save one message
+def save_message(some_chat, some_post):
     chat(some_chat).insert_one(some_post)
 
 

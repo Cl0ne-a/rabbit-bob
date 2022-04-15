@@ -5,4 +5,4 @@
 # and put your 'api_id' and 'api_hash' instead of existing
 
 # to subscribe or listen to already existing subscription 
-# enter <channel_name> r.g. 't.me/rian_ru' no quotes
+# enter <@user_name> or <channel_name> (t.me/rian_ru' no quotes) you are going to parse
