@@ -9,6 +9,12 @@ api_hash = '0acd5bb421d68b4a006454465de4fa78'
 parser = argparse.ArgumentParser('set_history_length')
 telegram_client = TelegramClient('Rabbit Bob', api_id, api_hash)
 
+parser.add_argument("-id", help="set client api_id", type=int)
+parser.add_argument("-hash", help="set client api_hash", type=str)
+parser.add_argument("--limit", "-L", help="limits the history length to certain length", type=int, default=10)
+
+args = parser.parse_args()
+
 print('Input chat to read: \n')
 chat_name = input()
 
@@ -30,8 +36,6 @@ async def normal_handler(event):
 telegram_client.start()
 
 # get all the history in the channel:
-parser.add_argument("--limit", "-L", help="limits the history length to certain length", type=int, default=10)
-args = parser.parse_args()
 messages_history = telegram_client.iter_messages(chat_name, args.limit)
 
 # with TelegramClient('HannaShchur', api_id, api_hash) as client:
