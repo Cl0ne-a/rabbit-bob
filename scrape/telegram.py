@@ -52,4 +52,3 @@ class TGScraper:
             scraped = self.scrape_group_posts(chat.name)
             self.exporter.consume_group_posts(chat.name, list(scraped))
         self._client.disconnect()
-

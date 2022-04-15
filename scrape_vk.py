@@ -1,6 +1,8 @@
 import json
+import re
 import os.path
 from argparse import ArgumentParser
+from urllib.parse import urlparse
 
 from export.mongo import MongoVKExporter
 from scrape.vk import VKScraper
@@ -48,19 +50,24 @@ if __name__ == '__main__':
 
     # fetch group_ids
     group_ids = set()
+    group_names = set()
     if args.group_file:
         lines = [
             line.strip()
             for line in open(args.group_file).read().splitlines()
             if line
         ]
-        for line in lines:
-            try:
-                group_ids.add(int(line))
-            except ValueError:
-                continue
-        if not group_ids:
-            raise ValueError('File does not contain any group ids')
+        for n, line in enumerate(lines):
+            url = line if re.search(r'^(?:https?:)?//', line) else f'//{line}'
+            path = urlparse(url).path
+            assert path.count('/') == 1, \
+                f"(Line: {n:04d})Invalid group link: {line}. " \
+                f"Correct format: http://vk.com/groupname"
+            short_name = path.split('/')[-1]
+            group_names.add(short_name)
+
+        if not group_ids and not group_names:
+            raise ValueError('No groups were provided')
 
     group_ids.update(args.group_list)
     config = json.load(open(args.config))
@@ -69,6 +76,7 @@ if __name__ == '__main__':
         config=config,
         exporter=exporter,
         group_list=group_ids,
+        group_names=group_names,
         post_limit=args.posts_limit,
         comment_limit=args.comments_limit,
     )
