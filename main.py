@@ -30,9 +30,9 @@ async def normal_handler(event):
 telegram_client.start()
 
 # get all the history in the channel:
-parser.add_argument("limiter", help="limits the history length to certain length", type=int, default=10)
-history = parser.parse_args()
-messages_history = telegram_client.iter_messages(chat_name, history.limiter)
+parser.add_argument("--limit", "-L", help="limits the history length to certain length", type=int, default=10)
+args = parser.parse_args()
+messages_history = telegram_client.iter_messages(chat_name, args.limit)
 
 # with TelegramClient('HannaShchur', api_id, api_hash) as client:
 history = []
@@ -52,6 +52,6 @@ else:
         element = {'date': date, 'message': message_text}
         history.append(element)
 
-db.save_history(chat_name, history.__reversed__())
+db.save_history(chat_name, reversed(history))
 
 telegram_client.run_until_disconnected()
