@@ -58,8 +58,17 @@ class MongoVKExporter(MongoExporter):
 
 class MongoTelegramExporter(MongoVKExporter):
     def filter_existing_posts(self, gid, posts):
-        requested = {"id": {"$in": [p['id'] for p in posts]}}
         group_collection = self._db.get_collection(gid)
-        existing = {p['id'] for p in group_collection.find(requested)}
+        requested_ids = [p['id'] for p in posts]
+        self.log.info(f"Posts collected: {requested_ids}")
 
-        return [p for p in posts if p['id'] not in existing]
+        existing = {
+            p['id']
+            for p in group_collection.find({"id": {"$in": requested_ids}})
+        }
+        self.log.info(f"Ignoring(already exist): {existing}")
+        staged = [p for p in posts if p['id'] not in existing]
+        self.log.info(
+            f"Posts staged to export: {[p['id'] for p in staged]}"
+        )
+        return staged

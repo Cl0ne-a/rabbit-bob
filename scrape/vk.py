@@ -121,7 +121,7 @@ class VKScraper:
     def scrape(self):
         self._resolve_group_ids()
         if not self._group_list:
-            self.log.error('No groups to parse')
+            self.log.error('No groups to scrape')
             return
 
         # TODO: make it thread safe with locks/mutex/etc and parallelize
