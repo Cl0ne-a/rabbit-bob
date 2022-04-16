@@ -50,5 +50,5 @@ class TGScraper:
 
         for chat in chats:
             scraped = self.scrape_group_posts(chat.name)
-            self.exporter.consume_group_posts(chat.name, list(scraped))
+            self.exporter.consume_group_posts(f'tg_{chat.name}', list(scraped))
         self._client.disconnect()

@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod
 
 from pymongo import MongoClient
@@ -7,6 +8,7 @@ class MongoExporter:
     _DEFAULT_DB = 'chatters'
 
     def __init__(self, config: dict):
+        self.log = logging.getLogger(name=type(self).__name__)
         if 'mongo' not in config:
             raise ValueError('json config must contain "mongo" section')
         else:
@@ -22,8 +24,13 @@ class MongoExporter:
         )
 
     def consume_group_posts(self, gid, posts):
-        group_collection = self._db.get_collection(str(gid))
-        group_collection.insert_many(self.filter_existing_posts(gid, posts))
+        group_collection = self._db.get_collection(gid)
+        staged = self.filter_existing_posts(gid, posts)
+        if staged:
+            group_collection.insert_many(staged)
+        else:
+            self.log.info("All records are already exported"
+                          "(or no records were provided)")
 
     @abstractmethod
     def filter_existing_posts(self, *args, **kwargs):
@@ -32,13 +39,27 @@ class MongoExporter:
 
 class MongoVKExporter(MongoExporter):
     def filter_existing_posts(self, gid, posts):
-        requested = {"id": {"$in": [p['id'] for p in posts]}}
-        group_collection = self._db.get_collection(str(gid))
-        existing = {p['id'] for p in group_collection.find(requested)}
+        group_collection = self._db.get_collection(gid)
+        requested_ids = [p['post_id'] for p in posts]
+        self.log.info(f"Posts collected: {requested_ids}")
 
-        return [p for p in posts if p['id'] not in existing]
+        existing = {
+            p['post_id']
+            for p in group_collection.find({"post_id": {"$in": requested_ids}})
+        }
+        self.log.info(f"Ignoring(already exist): {existing}")
+
+        staged = [p for p in posts if p['post_id'] not in existing]
+        self.log.info(
+            f"Posts staged to export: {[p['post_id'] for p in staged]}"
+        )
+        return staged
 
 
 class MongoTelegramExporter(MongoVKExporter):
-    """Turns out vk exporter fits this tg as well (so far)"""
-    ...
+    def filter_existing_posts(self, gid, posts):
+        requested = {"id": {"$in": [p['id'] for p in posts]}}
+        group_collection = self._db.get_collection(gid)
+        existing = {p['id'] for p in group_collection.find(requested)}
+
+        return [p for p in posts if p['id'] not in existing]

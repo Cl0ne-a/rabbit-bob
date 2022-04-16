@@ -1,13 +1,20 @@
+import calendar
 import json
+import logging
 import re
 import os.path
+import sys
 from argparse import ArgumentParser
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 from export.mongo import MongoVKExporter
 from scrape.vk import VKScraper
 
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+
 if __name__ == '__main__':
+
     parser = ArgumentParser()
     parser.add_argument(
         '-C',
@@ -15,12 +22,12 @@ if __name__ == '__main__':
         help='config file with login credentials, export(db) settings, etc.'
     )
     parser.add_argument(
-        '-G',
+        '-G', '--group-file',
         dest='group_file', required=False,
         help='file with group id list'
     )
     parser.add_argument(
-        '-g',
+        '-g', '--group-list',
         nargs='+', default=[], type=int, dest='group_list', required=False,
         help='space separated list of group ids'
     )
@@ -36,7 +43,35 @@ if __name__ == '__main__':
              'to scrape from single group post'
     )
 
+    parser.add_argument(
+        '--offset-datetime',
+        type=lambda s: datetime.fromisoformat(s), required=False,
+        default=datetime.now(),
+        help='End date to search publications '
+             '(format: YYYY-MM-DD HH:MM:SS)'
+    )
+
+    search_depth = parser.add_mutually_exclusive_group()
+    search_depth.add_argument(
+        '--days',
+        type=int, required=False,
+        help='Amount of days to search backwards for publications'
+    )
+    search_depth.add_argument(
+        '--hours',
+        type=int, required=False,
+        help='Amount of hours to search backwards for publications'
+    )
+
     args = parser.parse_args()
+    ts_end = calendar.timegm(args.offset_datetime.timetuple())
+    if args.days:
+        delta = timedelta(days=args.days)
+    elif args.hours:
+        delta = timedelta(hours=args.hours)
+    else:
+        delta = timedelta(hours=24)
+    ts_start = calendar.timegm((args.offset_datetime - delta).timetuple())
 
     # validate args
     if not os.path.exists(args.config):
@@ -79,5 +114,6 @@ if __name__ == '__main__':
         group_names=group_names,
         post_limit=args.posts_limit,
         comment_limit=args.comments_limit,
+        ts_start=ts_start, ts_end=ts_end
     )
     scraper.scrape()
