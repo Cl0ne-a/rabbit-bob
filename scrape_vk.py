@@ -24,7 +24,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-G', '--group-file',
         dest='group_file', required=False,
-        help='file with group id list'
+        help='file with group links'
     )
     parser.add_argument(
         '-g', '--group-list',
