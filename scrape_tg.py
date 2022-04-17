@@ -9,10 +9,8 @@ TODO:
 import json
 import logging
 import os
-import re
 import sys
 from argparse import ArgumentParser
-from urllib.parse import urlparse
 
 from export.mongo import MongoTelegramExporter
 from scrape.telegram import TGScraper
@@ -29,7 +27,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-G', '--group-file',
-        dest='group_file', required=False,
+        dest='group_file', required=True,
         help='file with group links'
     )
     parser.add_argument(
@@ -42,29 +40,14 @@ if __name__ == '__main__':
     if not os.path.exists(args.config):
         raise FileNotFoundError(args.config)
 
-    group_names = set()
-    if args.group_file:
-        lines = [
-            line.strip()
-            for line in open(args.group_file).read().splitlines()
-            if line
-        ]
+    group_names = {
+        line.strip()
+        for line in open(args.group_file).read().splitlines()
+        if line
+    }
 
-        for n, line in enumerate(lines):
-            if line.startswith("@"):
-                group_names.add(line)
-            else:
-                re_link = re.compile(r'^(?:https?:)?//')
-                url = line if re_link.search(line) else f'//{line}'
-                path = urlparse(url).path
-                assert path.count('/') == 1, \
-                    f"(Line: {n:04d})Invalid group link: {line}. " \
-                    f"Correct format: http://t.me/groupname"
-                short_name = path.split('/')[-1]
-                group_names.add(short_name)
-
-        if not group_names:
-            raise ValueError('No groups were provided')
+    if not group_names:
+        raise ValueError('No groups were provided')
 
     config = json.load(open(args.config))
     exporter = MongoTelegramExporter(config)
