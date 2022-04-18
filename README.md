@@ -15,7 +15,7 @@
 
 ---
 ### FAQ
-#### How to get vk token and app id(using browser):
+#### How to get vk token and app id(using logged-in browser):
 
 1. get vk app created and configured
    1. sign in into vk
@@ -23,15 +23,19 @@
    3. create standalone app
    4. enable app (make visible)
    5. enable Open API and add http://localhost/ address (localhost host)
-2. retrieve ip independent token
-   1. open `https://oauth.vk.com/authorize?client_id=<APP_ID>&display=page&redirect_uri=http://localhost:8000/&scope=2042974&response_type=code` in browser
-      1. take APP_ID from the created app
-      2. scope is a bitmask of permissions (offline bit(2^16) is responsible for token without expiration)
-   2. take code from address where browser was redirected (get param)
-   3. open `https://oauth.vk.com/access_token?client_id=<APP_ID>&client_secret=<APP_SECRET>&redirect_uri=http://localhost:8000/&code=<CODE>`
+2. retrieve token 
+   1. open `https://oauth.vk.com/authorize?client_id=<APP_ID>&display=page&redirect_uri=http://localhost:8000/&scope=notify,friends,photos,audio,video,stories,pages,status,notes,messages,wall,ads,offline,docs,groups,notifications,stats,email,market&response_type=token`
+         1. replace APP_ID with the created app id
+         2. copy access_token from the returned url get parameter
+3. alternative (ip independent) token retrieval (does not provide newsfeed access)
+   1. open `https://oauth.vk.com/authorize?client_id=<APP_ID>&display=page&redirect_uri=http://localhost:8000/&scope=notify,friends,photos,audio,video,stories,pages,status,notes,messages,wall,ads,offline,docs,groups,notifications,stats,email,market&response_type=code` in browser
+      1. replace APP_ID with the created app id
+         2. copy code from the returned url get parameter
+   2. open `https://oauth.vk.com/access_token?client_id=<APP_ID>&client_secret=<APP_SECRET>&redirect_uri=http://localhost:8000/&code=<CODE>`
       1. replace APP_ID with the created app id
       2. replace APP_SECRET with the created app settings app secret
       3. replace CODE with previously obtained code
+      4. copy access_token from the returned url get parameter
 
 #### How to get Telegram token 
 1. go to https://my.telegram.org/ and authorize 

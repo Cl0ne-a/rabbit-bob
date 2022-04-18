@@ -50,12 +50,36 @@ class VKScraper:
         self.__session._auth_token()
         self.api = self.__session.get_api()
 
+    def _get_newsfeed(self, **kwargs):
+        try:
+            return self.api.newsfeed.get(**kwargs)
+        except ApiError as e:
+            self.log.error('Failed during api.newsfeed.get')
+            self.log.error(e, exc_info=True)
+            raise e
+
+    def _get_by_groups(self, **kwargs):
+        try:
+            return self.api.groups.getById(**kwargs)
+        except ApiError as e:
+            self.log.error('Failed during api.groups.getById')
+            self.log.error(e, exc_info=True)
+            raise e
+
+    def _get_wall_comments(self, **kwargs):
+        try:
+            return self.api.wall.getComments(**kwargs)
+        except ApiError as e:
+            self.log.error('Failed during api.wall.getComments')
+            self.log.error(e, exc_info=True)
+            raise e
+
     def _resolve_group_ids(self):
         self.log.info('Solving group ids from provided links...')
 
         for name in set(self._group_names):
             try:
-                result = self.api.groups.getById(
+                result = self._get_by_groups(
                     group_id=name, fields=f'id,screen_name,can_see_all_posts'
                 )
                 is_accessible = result[0].get('can_see_all_posts', False)
@@ -70,8 +94,7 @@ class VKScraper:
                         )
                 else:
                     self.log.warning(f"Unable to resolve group '{name}' id")
-            except ApiError as e:
-                self.log.error(e, exc_info=True)
+            except ApiError:
                 self.log.warning(f"Unable to access group {name}")
                 continue
 
@@ -81,15 +104,14 @@ class VKScraper:
             post_identifier,
     ) -> List[dict]:
         try:
-            return self.api.wall.getComments(
+            return self._get_wall_comments(
                 owner_id=group_identifier,
                 post_id=post_identifier,
                 count=self.comment_limit,
                 extended=1,
                 preview_length=0
             )['items']
-        except ApiError as e:
-            self.log.error(e, exc_info=True)
+        except ApiError:
             return []
 
     def _scrape_groups(self, *group_ids: int):
@@ -112,7 +134,7 @@ class VKScraper:
         )
 
         self.log.info('Scraping group posts...')
-        return self.api.newsfeed.get(
+        return self._get_newsfeed(
             filters='post',
             source_ids=joined_ids,
             **time_constraints
