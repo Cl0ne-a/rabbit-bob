@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 import vk_api
 from vk_api import VkUserPermissions, ApiError
@@ -82,25 +82,23 @@ class VKScraper:
             self.log.error(e, exc_info=True)
             raise e
 
-    def _resolve_group_ids(self):
-        self.log.info('Solving group ids from provided links...')
+    def _resolve_group_id(self, name: str) -> Optional[int]:
+        self.log.info(f'Solving group id from provided shortname: {name}')
+        try:
+            result = self._get_by_groups(
+                group_id=name, fields=f'id,screen_name,can_see_all_posts'
+            )
+            if not result:
+                return None
 
-        for name in set(self._group_names):
-            try:
-                result = self._get_by_groups(
-                    group_id=name, fields=f'id,screen_name,can_see_all_posts'
+            if result[0].get('can_see_all_posts', False):
+                return result[0].get('id', None)
+            else:
+                self.log.warning(
+                    f"Posts of the group '{name}' are not accessible"
                 )
-                is_accessible = result[0].get('can_see_all_posts', False)
-
-                if is_accessible:
-                    self._group_list.add(result[0]['id'])
-                else:
-                    self.log.warning(
-                        f"Posts of the group '{name}' are not accessible"
-                    )
-            except ApiError:
-                self.log.warning(f"Unable to access group {name}")
-                continue
+        except ApiError:
+            self.log.warning(f"Unable to access group {name}")
 
     def scrape_post_comments(
             self,
@@ -145,16 +143,15 @@ class VKScraper:
         return collected
 
     def scrape(self):
-        self._resolve_group_ids()
-        if not self._group_list:
-            self.log.error('No groups to scrape')
-            return
-
         # TODO: make it thread safe with locks/mutex/etc and parallelize
         #  (consider splitting groups into bins based on threads available)
 
         self.log.info('Applying town portal spell on all detected orcs...')
-        for gid in self._group_list:
+        for name in set(self._group_names):
+            gid = self._resolve_group_id(name)
+            if gid is None:
+                continue
+
             self.log.info(f'Scraping group {gid} posts...')
             items = self._scrape_group(gid)
             self.log.info(f"Exporting group {gid}...")
