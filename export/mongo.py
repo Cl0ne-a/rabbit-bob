@@ -40,18 +40,18 @@ class MongoExporter:
 class MongoVKExporter(MongoExporter):
     def filter_existing_posts(self, gid, posts):
         group_collection = self._db.get_collection(gid)
-        requested_ids = [p['post_id'] for p in posts]
+        requested_ids = [p['id'] for p in posts]
         self.log.info(f"Posts collected: {requested_ids}")
 
         existing = {
-            p['post_id']
-            for p in group_collection.find({"post_id": {"$in": requested_ids}})
+            p['id']
+            for p in group_collection.find({"id": {"$in": requested_ids}})
         }
         self.log.info(f"Ignoring(already exist): {existing}")
 
-        staged = [p for p in posts if p['post_id'] not in existing]
+        staged = [p for p in posts if p['id'] not in existing]
         self.log.info(
-            f"Posts staged to export: {[p['post_id'] for p in staged]}"
+            f"Posts staged to export: {[p['id'] for p in staged]}"
         )
         return staged
 
