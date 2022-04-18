@@ -120,11 +120,6 @@ class VKScraper:
 
     def scrape(self):
         self._resolve_group_ids()
-        res = self.api.groups.get()
-        import pprint
-        pprint.pprint(res)
-        exit(0)
-
         if not self._group_list:
             self.log.error('No groups to scrape')
             return
