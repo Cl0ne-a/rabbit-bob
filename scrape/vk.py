@@ -1,12 +1,12 @@
 import logging
-from collections import defaultdict
-from datetime import datetime
 from typing import List
 
 import vk_api
 from vk_api import VkUserPermissions, ApiError
 
 from base import Exporter
+
+MAX_PER_WALL_PAGE = 100
 
 
 class VKScraper:
@@ -74,6 +74,14 @@ class VKScraper:
             self.log.error(e, exc_info=True)
             raise e
 
+    def _get_wall(self, **kwargs):
+        try:
+            return self.api.wall.get(**kwargs)
+        except ApiError as e:
+            self.log.error('Failed during api.wall.get')
+            self.log.error(e, exc_info=True)
+            raise e
+
     def _resolve_group_ids(self):
         self.log.info('Solving group ids from provided links...')
 
@@ -110,31 +118,31 @@ class VKScraper:
         except ApiError:
             return []
 
-    def _scrape_groups(self, *group_ids: int):
-        self.log.info('Applying town portal spell on all detected orcs...')
+    def _scrape_group(self, gid: int):
+        collected, offset, oldest_ts = [], 0, None
 
-        def to_group_id(value: int) -> str:
-            return f'g{value}'
+        def is_enough():
+            return len(collected) >= self.post_limit
 
-        joined_ids = ','.join(map(to_group_id, group_ids))
+        def can_fetch_more():
+            return oldest_ts is None or oldest_ts > self.ts_start
 
-        self.log.info('Calculating time constraints...')
-        time_constraints = dict()
-        if self.ts_start is not None:
-            time_constraints['start_time'] = self.ts_start
-        if self.ts_end is not None:
-            time_constraints['end_time'] = self.ts_end
-        self.log.info(
-            f'start: {datetime.fromtimestamp(self.ts_start)}; '
-            f'end: {datetime.fromtimestamp(self.ts_end)}'
-        )
+        while not is_enough() and can_fetch_more():
+            fetched = self._get_wall(
+                owner_id=-gid, count=MAX_PER_WALL_PAGE, offset=offset
+            ).get('items', [])
+            if not fetched:
+                break
 
-        self.log.info('Scraping group posts...')
-        return self._get_newsfeed(
-            filters='post',
-            source_ids=joined_ids,
-            **time_constraints
-        )['items']
+            filtered = [
+                i for i in fetched if self.ts_start < i['date'] < self.ts_end
+            ]
+            collected.extend(filtered)
+
+            oldest_ts = fetched[-1]['date']
+            offset += MAX_PER_WALL_PAGE
+
+        return collected
 
     def scrape(self):
         self._resolve_group_ids()
@@ -145,12 +153,9 @@ class VKScraper:
         # TODO: make it thread safe with locks/mutex/etc and parallelize
         #  (consider splitting groups into bins based on threads available)
 
-        scraped = self._scrape_groups(*self._group_list)
-
-        staged = defaultdict(list)
-        for item in scraped:
-            staged[item.get('source_id', 'source_unknown')].append(item)
-
-        for gid, items in staged.items():
+        self.log.info('Applying town portal spell on all detected orcs...')
+        for gid in self._group_list:
+            self.log.info(f'Scraping group {gid} posts...')
+            items = self._scrape_group(gid)
             self.log.info(f"Exporting group {gid}...")
             self.exporter.consume_group_posts(f'vk_{gid}', items)
