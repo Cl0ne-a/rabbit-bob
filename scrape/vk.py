@@ -83,17 +83,13 @@ class VKScraper:
                     group_id=name, fields=f'id,screen_name,can_see_all_posts'
                 )
                 is_accessible = result[0].get('can_see_all_posts', False)
-                is_same_group = result[0].get('screen_name', None) == name
 
-                if is_same_group:
-                    if is_accessible:
-                        self._group_list.add(result[0]['id'])
-                    else:
-                        self.log.warning(
-                            f"Posts of the group '{name}' are not accessible"
-                        )
+                if is_accessible:
+                    self._group_list.add(result[0]['id'])
                 else:
-                    self.log.warning(f"Unable to resolve group '{name}' id")
+                    self.log.warning(
+                        f"Posts of the group '{name}' are not accessible"
+                    )
             except ApiError:
                 self.log.warning(f"Unable to access group {name}")
                 continue
