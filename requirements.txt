@@ -1,3 +1,3 @@
-telethon ~= 1.24
+telethon == 0.8.13
 vk_api ~= 11.9
 pymongo ~= 4.1
