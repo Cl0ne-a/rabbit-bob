@@ -5,7 +5,6 @@ TODO:
  - consider having date filter (offset/depth)
 
 """
-
 import json
 import logging
 import os
@@ -18,17 +17,25 @@ from scrape.telegram import TGScraper
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 
+async def main(scraper_: TGScraper):
+    await scraper_.scrape()
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
         '-C',
         dest='config', required=True,
-        help='config file with login credentials, export(db) settings, etc.'
+        help='Config file with login credentials, export(db) settings, etc.'
     )
     parser.add_argument(
         '-G', '--group-file',
         dest='group_file', required=True,
-        help='file with group links'
+        help='File with group identifiers. '
+             'Identifiers can either be '
+             't.me/joinchat/ link '
+             'or username of the target channel/supergroup '
+             '(in the format @username)'
     )
     parser.add_argument(
         '--posts-limit',
@@ -57,4 +64,4 @@ if __name__ == '__main__':
         exporter=exporter,
         post_limit=args.posts_limit
     )
-    scraper.scrape()
+    scraper.client.run(scraper.scrape())
